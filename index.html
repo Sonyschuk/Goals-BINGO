@@ -1,0 +1,990 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <title>Goals Bingo</title>
+
+  <meta name="theme-color" content="#0f5c66" />
+  <link rel="manifest" href="manifest.json" />
+
+  <style>
+    :root{
+      --teal:#0f5c66;
+      --bg:#f4f6f8;
+      --card:#ffffff;
+      --muted:#e7ecef;
+      --text:#1a1f24;
+      --sub:#5b6770;
+      --shadow: 0 8px 24px rgba(0,0,0,.08);
+      --radius: 18px;
+    }
+    *{ box-sizing: border-box; }
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background:var(--bg);
+      color:var(--text);
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
+    header{
+      padding:16px 12px 8px;
+      width: 100%;
+      margin: 0 auto;
+    }
+    h1{
+      margin:0 0 6px;
+      font-size: 22px;
+      font-weight: 750;
+      letter-spacing: .2px;
+    }
+    .subtitle{
+      color:var(--sub);
+      font-size: 13px;
+      margin-bottom: 12px;
+      line-height: 1.35;
+    }
+    .bar{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:space-between;
+      margin: 10px 0 14px;
+    }
+    .bar-left, .bar-right{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+    select, button{
+      border: 1px solid #d7dde2;
+      background: var(--card);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 14px;
+      color: var(--text);
+      box-shadow: 0 1px 0 rgba(0,0,0,.02);
+      max-width: 100%;
+    }
+    button{
+      cursor:pointer;
+      font-weight: 650;
+      touch-action: manipulation;
+    }
+    button.primary{
+      background: var(--teal);
+      color: white;
+      border-color: transparent;
+    }
+    button.warn{
+      background:#fff;
+      border-color:#f0c6c6;
+      color:#9b1c1c;
+    }
+    button:active{ transform: translateY(1px); }
+
+    .wrap{
+      width: 100%;
+      margin: 0 auto;
+      padding: 0 12px 24px;
+    }
+    .panel{
+      background: var(--card);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px;
+      width: 100%;
+    }
+
+    /* Bingo grid */
+    .grid{
+      display:grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+      width: 100%;
+    }
+    .cell{
+      background: #f9fbfc;
+      border: 1px solid #e2e7eb;
+      border-radius: 16px;
+      min-height: 72px;
+      padding: 8px 8px 10px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      line-height:1.15;
+      font-size: 13px;
+      user-select:none;
+      position:relative;
+      transition: transform .06s ease, background .15s ease, border-color .15s ease;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .cell:active{ transform: scale(.99); }
+    .cell.done{
+      background: rgba(15,92,102,.10);
+      border-color: rgba(15,92,102,.35);
+    }
+    .cell.center{
+      background: var(--muted);
+      border-color: #d5dde3;
+      font-weight: 800;
+      letter-spacing: .6px;
+    }
+
+    .cellText{
+      width:100%;
+    }
+
+    /* Dots row */
+    .dots{
+      display:flex;
+      gap:6px;
+      align-items:center;
+      justify-content:center;
+      width:100%;
+    }
+    .dot{
+      width:8px;
+      height:8px;
+      border-radius:999px;
+      border:1px solid #c9d3d9;
+      background: transparent;
+      opacity: 1;
+    }
+    .dot.filled{
+      background: var(--teal);
+      border-color: var(--teal);
+    }
+    /* dots beyond target are "inactive" (dimmed) */
+    .dot.inactive{
+      opacity: .25;
+    }
+
+    .meta{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      justify-content:space-between;
+      align-items:center;
+      margin-top: 12px;
+      color: var(--sub);
+      font-size: 13px;
+    }
+    .pill{
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: #eef2f5;
+      border: 1px solid #dde5ea;
+      color: #334049;
+      font-weight: 650;
+      font-size: 12px;
+    }
+    .divider{ height:1px; background:#e8edf1; margin: 14px 0; }
+    .row{
+      display:grid;
+      grid-template-columns: 1fr;
+      gap:10px;
+    }
+    @media (min-width: 780px){
+      .row{ grid-template-columns: 1fr 1fr; }
+    }
+    .small{
+      font-size: 12px;
+      color: var(--sub);
+      margin-top: 6px;
+      line-height: 1.35;
+    }
+    .edit-indicator{
+      font-weight: 800;
+      color: var(--teal);
+    }
+
+    @media (max-width: 480px){
+      h1{ font-size: 20px; }
+      .subtitle{ font-size: 12px; }
+      .grid{ gap: 8px; }
+      .cell{
+        min-height: 66px;
+        font-size: 12.5px;
+        padding: 7px 7px 9px;
+        border-radius: 14px;
+        gap: 5px;
+      }
+      button, select{
+        padding: 9px 10px;
+        font-size: 13px;
+      }
+      .panel{ padding: 12px; }
+      .dot{ width:7px; height:7px; }
+    }
+
+    /* ===== Celebrations (toast + confetti) ===== */
+    .toast{
+      position: fixed;
+      left: 50%;
+      bottom: 18px;
+      transform: translateX(-50%);
+      background: rgba(26,31,36,.92);
+      color: white;
+      padding: 12px 14px;
+      border-radius: 14px;
+      font-size: 14px;
+      font-weight: 700;
+      box-shadow: 0 10px 30px rgba(0,0,0,.2);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .18s ease, transform .18s ease;
+      z-index: 9999;
+      max-width: calc(100vw - 24px);
+      text-align: center;
+    }
+    .toast.show{
+      opacity: 1;
+      transform: translateX(-50%) translateY(-6px);
+    }
+    .confetti-layer{
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: 9998;
+    }
+    .confetti{
+      position: absolute;
+      width: 10px;
+      height: 14px;
+      border-radius: 4px;
+      opacity: .95;
+      animation: fall linear forwards;
+      will-change: transform;
+      filter: drop-shadow(0 2px 1px rgba(0,0,0,.12));
+    }
+    @keyframes fall{
+      0%   { transform: translate3d(0, -20px, 0) rotate(0deg);   opacity: 1; }
+      100% { transform: translate3d(0, 110vh, 0) rotate(720deg); opacity: 1; }
+    }
+
+    /* ===== Import/Export Modal ===== */
+    .modal-backdrop{
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.35);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding: 14px;
+      z-index: 10000;
+    }
+    .modal-backdrop[hidden]{ display:none !important; }
+
+    .modal{
+      width: min(920px, 100%);
+      background: #fff;
+      border-radius: 18px;
+      box-shadow: 0 18px 60px rgba(0,0,0,.25);
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+    }
+    .modal-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding: 12px 14px;
+      border-bottom: 1px solid #e6ecef;
+    }
+    .modal-title{ font-weight: 800; }
+    .modal-close{
+      border: 1px solid #d7dde2;
+      background: #fff;
+      border-radius: 12px;
+      padding: 8px 10px;
+      font-weight: 800;
+    }
+    .modal-textarea{
+      width: 100%;
+      min-height: 52vh;
+      border: 0;
+      padding: 12px 14px;
+      font-size: 12px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+      outline: none;
+      resize: vertical;
+    }
+    .modal-actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      justify-content:flex-end;
+      padding: 12px 14px;
+      border-top: 1px solid #e6ecef;
+    }
+    .file-btn{
+      border: 1px solid #d7dde2;
+      background: #fff;
+      border-radius: 12px;
+      padding: 10px 12px;
+      font-size: 14px;
+      font-weight: 650;
+      cursor: pointer;
+    }
+    .modal-help{
+      padding: 0 14px 14px;
+      color: var(--sub);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+  </style>
+</head>
+
+<body>
+<header>
+  <h1>Goals Bingo</h1>
+  <div class="subtitle">
+    Tap tiles to add progress. In <span class="edit-indicator">Edit Mode</span>, you can set a tile target (1–5).
+    <br><span class="small">Tip: press & hold a tile to reset its progress.</span>
+  </div>
+
+  <div class="bar">
+    <div class="bar-left">
+      <label>
+        <select id="monthSelect" aria-label="Month"></select>
+      </label>
+      <button id="editBtn" class="primary">Edit Mode: OFF</button>
+      <button id="resetBtn" class="warn">Reset Month</button>
+    </div>
+
+    <div class="bar-right">
+      <button id="exportBtn">Export</button>
+      <button id="importBtn">Import</button>
+    </div>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="panel">
+    <div class="grid" id="grid"></div>
+
+    <div class="meta">
+      <div class="pill" id="progressPill">0/24 complete</div>
+      <div id="statusText">Stored on this device (offline).</div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="row">
+      <div>
+        <strong>How progress works</strong>
+        <div class="small">
+          Each tile can require 1–5 completions. Tap to add progress dots.
+          When the required number is reached, the tile becomes complete.
+        </div>
+      </div>
+      <div>
+        <strong>Export / Import</strong>
+        <div class="small">
+          Export copies a backup you can paste anywhere. Import restores it on this device.
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Celebration UI -->
+<div class="confetti-layer" id="confettiLayer" aria-hidden="true"></div>
+<div class="toast" id="toast" aria-live="polite"></div>
+
+<!-- Import/Export Modal -->
+<div id="modalBackdrop" class="modal-backdrop" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Import Export">
+    <div class="modal-head">
+      <div id="modalTitle" class="modal-title">Export</div>
+      <button id="modalClose" class="modal-close" aria-label="Close">✕</button>
+    </div>
+
+    <textarea id="modalTextarea" class="modal-textarea" spellcheck="false"></textarea>
+
+    <div class="modal-actions">
+      <button id="modalCopyBtn">Copy</button>
+
+      <label class="file-btn">
+        Import file
+        <input id="modalFileInput" type="file" accept=".json,.txt,application/json,text/plain" hidden>
+      </label>
+
+      <button id="modalPrimaryBtn" class="primary">Done</button>
+    </div>
+
+    <div class="modal-help" id="modalHelp"></div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+
+  // New storage key for this repo/version
+  const LS_KEY = "goals_bingo_v1_state";
+
+  // ===== Generic default board =====
+  function defaultBoard(){
+    const tiles = Array(25).fill("");
+
+    // Row 1 — Health & Energy
+    tiles[0]  = "Health Challenge #1";
+    tiles[1]  = "Movement Goal #1";
+    tiles[2]  = "Nutrition Focus #1";
+    tiles[3]  = "Sleep Habit #1";
+    tiles[4]  = "Body Care Practice #1";
+
+    // Row 2 — Mind & Focus
+    tiles[5]  = "Focus Habit #1";
+    tiles[6]  = "Morning Routine #1";
+    tiles[7]  = "Reduce Distraction #1";
+    tiles[8]  = "Learning Goal #1";
+    tiles[9]  = "Digital Boundary #1";
+
+    // Row 3 — Personal Growth
+    tiles[10] = "Personal Growth Goal #1";
+    tiles[11] = "Confidence Practice #1";
+    tiles[12] = "INTENTIONAL";
+    tiles[13] = "Do One Brave Thing";
+    tiles[14] = "Reflect on a Win";
+
+    // Row 4 — Relationships
+    tiles[15] = "Meaningful Conversation";
+    tiles[16] = "Quality Time with Someone Important";
+    tiles[17] = "Express Appreciation";
+    tiles[18] = "Ask for Help or Support";
+    tiles[19] = "Connection Challenge #1";
+
+    // Row 5 — Joy & Creativity
+    tiles[20] = "Creative Project #1";
+    tiles[21] = "Try Something New";
+    tiles[22] = "Mini Adventure";
+    tiles[23] = "Joyful Treat (Intentional)";
+    tiles[24] = "Create Without a Goal";
+
+    return {
+      tiles,
+      targets: Array(25).fill(1),
+      counts: Array(25).fill(0),
+      celebrated: { lines: {}, full: false },
+      updatedAt: Date.now()
+    };
+  }
+
+  // ===== Elements =====
+  const $month = document.getElementById("monthSelect");
+  const $grid = document.getElementById("grid");
+  const $editBtn = document.getElementById("editBtn");
+  const $resetBtn = document.getElementById("resetBtn");
+  const $exportBtn = document.getElementById("exportBtn");
+  const $importBtn = document.getElementById("importBtn");
+  const $progress = document.getElementById("progressPill");
+  const $status = document.getElementById("statusText");
+  const $toast = document.getElementById("toast");
+  const $confettiLayer = document.getElementById("confettiLayer");
+
+  // Modal elements
+  const $modalBackdrop = document.getElementById("modalBackdrop");
+  const $modalTitle = document.getElementById("modalTitle");
+  const $modalTextarea = document.getElementById("modalTextarea");
+  const $modalClose = document.getElementById("modalClose");
+  const $modalCopyBtn = document.getElementById("modalCopyBtn");
+  const $modalPrimaryBtn = document.getElementById("modalPrimaryBtn");
+  const $modalHelp = document.getElementById("modalHelp");
+  const $modalFileInput = document.getElementById("modalFileInput");
+
+  let state = loadState();
+  let editMode = false;
+  let modalMode = "export"; // "export" | "import"
+
+  // ===== Text normalization (makes export/import reliable anywhere) =====
+  function normalizeText(text){
+    return String(text || "")
+      .replace(/[\u2018\u2019]/g, "'")
+      .replace(/[\u201C\u201D]/g, '"')
+      .replace(/\u2026/g, "...")
+      .replace(/\u00A0/g, " ")
+      .trim();
+  }
+
+  // ===== State helpers =====
+  function clampTarget(n){
+    const x = Number(n);
+    if(!Number.isFinite(x)) return 1;
+    return Math.min(5, Math.max(1, Math.round(x)));
+  }
+
+  function normalizeBoard(b){
+    const def = defaultBoard();
+    if(!b || typeof b !== "object") b = def;
+
+    if(!Array.isArray(b.tiles) || b.tiles.length !== 25) b.tiles = def.tiles.slice();
+
+    // Backward compatibility: old versions may have done[]
+    // Convert done -> counts when needed.
+    if(!Array.isArray(b.counts) || b.counts.length !== 25){
+      b.counts = Array(25).fill(0);
+      if(Array.isArray(b.done) && b.done.length === 25){
+        for(let i=0;i<25;i++){
+          if(i === 12) continue;
+          b.counts[i] = b.done[i] ? 1 : 0;
+        }
+      }
+    }
+
+    if(!Array.isArray(b.targets) || b.targets.length !== 25){
+      b.targets = Array(25).fill(1);
+    }
+
+    // Ensure center behaves
+    b.targets[12] = 1;
+    b.counts[12] = 1; // treated as complete for line checking
+
+    // Clamp targets and counts
+    for(let i=0;i<25;i++){
+      b.targets[i] = clampTarget(b.targets[i]);
+      if(i === 12) continue;
+      b.counts[i] = Math.min(5, Math.max(0, Math.round(Number(b.counts[i]) || 0)));
+    }
+
+    if(!b.celebrated) b.celebrated = { lines: {}, full: false };
+    if(!b.celebrated.lines) b.celebrated.lines = {};
+    if(typeof b.celebrated.full !== "boolean") b.celebrated.full = false;
+
+    if(!b.updatedAt) b.updatedAt = Date.now();
+
+    // Remove old field if present (harmless if left, but keep clean)
+    delete b.done;
+
+    return b;
+  }
+
+  function normalizeState(s){
+    if(!s || typeof s !== "object") s = { boards: {} };
+    if(!s.boards) s.boards = {};
+    MONTHS.forEach((_, i) => {
+      s.boards[i] = normalizeBoard(s.boards[i] || defaultBoard());
+    });
+    return s;
+  }
+
+  function saveState(){
+    localStorage.setItem(LS_KEY, JSON.stringify(state));
+  }
+
+  function loadState(){
+    // current key
+    const raw = localStorage.getItem(LS_KEY);
+    if(raw){
+      try{
+        return normalizeState(JSON.parse(raw));
+      } catch(e){}
+    }
+
+    // fresh install
+    const fresh = { boards: {} };
+    MONTHS.forEach((_, i) => fresh.boards[i] = defaultBoard());
+    localStorage.setItem(LS_KEY, JSON.stringify(fresh));
+    return normalizeState(fresh);
+  }
+
+  // ===== UI =====
+  function initMonthSelect(){
+    MONTHS.forEach((m, i) => {
+      const opt = document.createElement("option");
+      opt.value = String(i);
+      opt.textContent = m;
+      $month.appendChild(opt);
+    });
+    $month.value = String(new Date().getMonth());
+  }
+
+  function getBoard(){
+    return state.boards[Number($month.value)];
+  }
+
+  function isComplete(board, idx){
+    if(idx === 12) return true;
+    return (board.counts[idx] || 0) >= (board.targets[idx] || 1);
+  }
+
+  function setEditMode(on){
+    editMode = on;
+    $editBtn.textContent = `Edit Mode: ${editMode ? "ON" : "OFF"}`;
+    $editBtn.classList.toggle("primary", !editMode);
+    $editBtn.style.background = editMode ? "#ffffff" : "";
+    $editBtn.style.color = editMode ? "var(--teal)" : "";
+    $editBtn.style.borderColor = editMode ? "rgba(15,92,102,.35)" : "";
+    render();
+  }
+
+  function renderDots(board, idx){
+    const dots = document.createElement("div");
+    dots.className = "dots";
+
+    const target = clampTarget(board.targets[idx] || 1);
+    const count = Math.min(5, Math.max(0, board.counts[idx] || 0));
+
+    for(let d=1; d<=5; d++){
+      const dot = document.createElement("div");
+      dot.className = "dot";
+      if(d > target) dot.classList.add("inactive");
+      if(d <= count && d <= target) dot.classList.add("filled");
+      dots.appendChild(dot);
+    }
+    return dots;
+  }
+
+  function render(){
+    const board = getBoard();
+    $grid.innerHTML = "";
+
+    for(let i=0;i<25;i++){
+      const cell = document.createElement("div");
+      cell.className = "cell";
+
+      const isCenter = (i === 12);
+      if(isCenter) cell.classList.add("center");
+      if(isComplete(board, i)) cell.classList.add("done");
+
+      const text = document.createElement("div");
+      text.className = "cellText";
+      text.textContent = board.tiles[i] || "";
+      cell.appendChild(text);
+
+      // dots: only show if target > 1 and not center
+      if(!isCenter && clampTarget(board.targets[i] || 1) > 1){
+        cell.appendChild(renderDots(board, i));
+      }
+
+      // Tap
+      cell.addEventListener("click", () => {
+        if(isCenter) return;
+
+        if(editMode){
+          // 1) edit text
+          const current = board.tiles[i] || "";
+          const next = prompt("Edit square text:", current);
+          if(next === null) return;
+          board.tiles[i] = String(next || "").trim();
+
+          // 2) set target 1–5
+          const currentTarget = clampTarget(board.targets[i] || 1);
+          const targetInput = prompt("How many times to complete this square? (1–5)", String(currentTarget));
+          if(targetInput !== null){
+            board.targets[i] = clampTarget(targetInput);
+            // if target is lowered below current count, keep count but completion will reflect
+            board.counts[i] = Math.min(board.counts[i] || 0, 5);
+          }
+
+          board.updatedAt = Date.now();
+          saveState();
+          render();
+          return;
+        }
+
+        // Normal mode: increment until complete (then do nothing)
+        if(isComplete(board, i)) return;
+
+        board.counts[i] = Math.min(5, (board.counts[i] || 0) + 1);
+        board.updatedAt = Date.now();
+        saveState();
+
+        checkCelebrations();
+        render();
+      });
+
+      // Long press to reset tile progress (undo)
+      // Works on mobile: touchstart + timeout
+      let pressTimer = null;
+      cell.addEventListener("touchstart", (e) => {
+        if(editMode || isCenter) return;
+        pressTimer = setTimeout(() => {
+          if((board.counts[i] || 0) > 0){
+            const ok = confirm("Reset progress for this square?");
+            if(ok){
+              board.counts[i] = 0;
+              // If you reset progress, you might want to allow re-celebration later:
+              // Reset celebrations for this month only if you want strict behavior. We'll keep celebrations as-is.
+              board.updatedAt = Date.now();
+              saveState();
+              render();
+            }
+          }
+        }, 550);
+      }, {passive:true});
+
+      cell.addEventListener("touchend", () => {
+        if(pressTimer) clearTimeout(pressTimer);
+        pressTimer = null;
+      });
+
+      cell.addEventListener("touchmove", () => {
+        if(pressTimer) clearTimeout(pressTimer);
+        pressTimer = null;
+      });
+
+      // Also allow right-click / long-press context menu on desktop
+      cell.addEventListener("contextmenu", (e) => {
+        e.preventDefault();
+        if(editMode || isCenter) return;
+        if((board.counts[i] || 0) > 0){
+          const ok = confirm("Reset progress for this square?");
+          if(ok){
+            board.counts[i] = 0;
+            board.updatedAt = Date.now();
+            saveState();
+            render();
+          }
+        }
+      });
+
+      $grid.appendChild(cell);
+    }
+
+    const completeCount = board.counts
+      .map((_, i) => (i === 12 ? false : isComplete(board, i)))
+      .filter(Boolean).length;
+
+    $progress.textContent = `${completeCount}/24 complete`;
+    $status.textContent = `Saved on this device • Last updated ${new Date(board.updatedAt).toLocaleString()}`;
+  }
+
+  // ===== Bingo detection + celebrations =====
+  const LINES = (() => {
+    const lines = [];
+    for(let r=0;r<5;r++) lines.push([...Array(5)].map((_,c)=> r*5 + c));
+    for(let c=0;c<5;c++) lines.push([...Array(5)].map((_,r)=> r*5 + c));
+    lines.push([0,6,12,18,24]);
+    lines.push([4,8,12,16,20]);
+    return lines;
+  })();
+
+  function completedLines(board){
+    const completed = [];
+    LINES.forEach((line, i) => {
+      if(line.every(idx => isComplete(board, idx))) completed.push(i);
+    });
+    return completed;
+  }
+
+  function isFullCard(board){
+    for(let i=0;i<25;i++){
+      if(i === 12) continue;
+      if(!isComplete(board, i)) return false;
+    }
+    return true;
+  }
+
+  let toastTimer = null;
+  function showToast(text){
+    $toast.textContent = text;
+    $toast.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => $toast.classList.remove("show"), 1800);
+  }
+
+  function burstConfetti(count=60, durationMs=1400){
+    $confettiLayer.innerHTML = "";
+    const vw = Math.max(document.documentElement.clientWidth || 0, window.innerWidth || 0);
+    const palette = ["#0f5c66","#2f7e88","#f0c6c6","#f4d06f","#9ad0ec","#c7f9cc","#ffffff","#334049"];
+
+    for(let i=0;i<count;i++){
+      const el = document.createElement("div");
+      el.className = "confetti";
+      el.style.left = (Math.random()*vw) + "px";
+      el.style.top = (-20 - Math.random()*60) + "px";
+      el.style.background = palette[Math.floor(Math.random()*palette.length)];
+      el.style.width = (7 + Math.random()*8) + "px";
+      el.style.height = (10 + Math.random()*14) + "px";
+      el.style.opacity = (0.75 + Math.random()*0.25).toFixed(2);
+      el.style.animationDuration = (900 + Math.random()*900) + "ms";
+      el.style.animationDelay = (Math.random()*120) + "ms";
+      $confettiLayer.appendChild(el);
+    }
+    setTimeout(() => { $confettiLayer.innerHTML = ""; }, durationMs);
+  }
+
+  function checkCelebrations(){
+    const board = getBoard();
+
+    // Lines
+    const nowCompleted = completedLines(board);
+    const newly = nowCompleted.filter(lineId => !board.celebrated.lines[String(lineId)]);
+    if(newly.length){
+      newly.forEach(lineId => board.celebrated.lines[String(lineId)] = true);
+      board.updatedAt = Date.now();
+      saveState();
+
+      showToast(newly.length === 1 ? "BINGO! 🎉" : `BINGO x${newly.length}! 🎉`);
+      burstConfetti(newly.length >= 2 ? 90 : 60, newly.length >= 2 ? 1800 : 1400);
+    }
+
+    // Full card
+    const full = isFullCard(board);
+    if(full && !board.celebrated.full){
+      board.celebrated.full = true;
+      board.updatedAt = Date.now();
+      saveState();
+
+      showToast("FULL CARD! You did it ✨🎉");
+      burstConfetti(140, 2400);
+    }
+  }
+
+  // ===== Reset month =====
+  function resetMonth(){
+    const m = MONTHS[Number($month.value)];
+    const ok = confirm(`Reset ${m}? This clears progress & celebrations (keeps text & targets).`);
+    if(!ok) return;
+    const board = getBoard();
+    board.counts = Array(25).fill(0);
+    board.counts[12] = 1;
+    board.celebrated = { lines: {}, full: false };
+    board.updatedAt = Date.now();
+    saveState();
+    render();
+  }
+
+  // ===== Modal (Export / Import) =====
+  function openModal(mode, initialText){
+    modalMode = mode;
+
+    $modalTitle.textContent = (mode === "export") ? "Export" : "Import";
+    $modalTextarea.value = initialText || "";
+    $modalTextarea.readOnly = (mode === "export");
+
+    $modalPrimaryBtn.textContent = (mode === "export") ? "Done" : "Import";
+    $modalCopyBtn.hidden = (mode !== "export");
+
+    $modalHelp.textContent =
+      (mode === "export")
+        ? "Copy this text into Notes/email/message. Import it on another device to restore."
+        : "Paste the FULL export text here (or choose Import file). This overwrites data on THIS device.";
+
+    $modalBackdrop.hidden = false;
+    setTimeout(() => $modalTextarea.focus(), 50);
+  }
+
+  function closeModal(){
+    $modalBackdrop.hidden = true;
+    $modalTextarea.value = "";
+    $modalFileInput.value = "";
+  }
+
+  async function handleCopy(){
+    try{
+      await navigator.clipboard.writeText($modalTextarea.value);
+      showToast("Copied ✅");
+    } catch {
+      $modalTextarea.focus();
+      $modalTextarea.select();
+      showToast("Select + Copy");
+    }
+  }
+
+  function exportAll(){
+    const cleanBoards = JSON.parse(JSON.stringify(state.boards));
+
+    // Normalize tile text + ensure targets/counts are valid
+    Object.values(cleanBoards).forEach(b => {
+      b.tiles = (b.tiles || []).map(t => normalizeText(t));
+      b.targets = Array.isArray(b.targets) ? b.targets.map(clampTarget) : Array(25).fill(1);
+      b.counts  = Array.isArray(b.counts) ? b.counts.map(x => Math.min(5, Math.max(0, Math.round(Number(x)||0)))) : Array(25).fill(0);
+      b.targets[12] = 1;
+      b.counts[12] = 1;
+      if(!b.celebrated) b.celebrated = { lines:{}, full:false };
+      if(!b.updatedAt) b.updatedAt = Date.now();
+      delete b.done;
+    });
+
+    const payload = {
+      version: 1,
+      exportedAt: Date.now(),
+      boards: cleanBoards
+    };
+
+    openModal("export", JSON.stringify(payload));
+  }
+
+  function importAll(){
+    openModal("import", "");
+  }
+
+  function doImportFromText(txt){
+    const cleaned = normalizeText(txt);
+    const payload = JSON.parse(cleaned);
+
+    if(!payload || !payload.boards) throw new Error("Missing boards");
+
+    state = normalizeState({ boards: payload.boards });
+    saveState();
+    render();
+  }
+
+  // ===== Events =====
+  $month.addEventListener("change", render);
+  $editBtn.addEventListener("click", () => setEditMode(!editMode));
+  $resetBtn.addEventListener("click", resetMonth);
+  $exportBtn.addEventListener("click", exportAll);
+  $importBtn.addEventListener("click", importAll);
+
+  $modalClose.addEventListener("click", closeModal);
+  $modalBackdrop.addEventListener("click", (e) => { if(e.target === $modalBackdrop) closeModal(); });
+  $modalCopyBtn.addEventListener("click", handleCopy);
+
+  $modalFileInput.addEventListener("change", async () => {
+    const file = $modalFileInput.files && $modalFileInput.files[0];
+    if(!file) return;
+    const text = await file.text();
+    $modalTextarea.value = text;
+  });
+
+  $modalPrimaryBtn.addEventListener("click", () => {
+    if(modalMode === "export"){
+      closeModal();
+      return;
+    }
+    const txt = $modalTextarea.value;
+    if(!txt.trim()){
+      alert("Paste an export first (or use Import file).");
+      return;
+    }
+    try{
+      doImportFromText(txt);
+      closeModal();
+      alert("Import complete!");
+    } catch(e){
+      console.error("Import failed:", e);
+      alert("Import failed. Make sure you pasted the FULL export text.");
+    }
+  });
+
+  // ===== Init =====
+  initMonthSelect();
+  state = normalizeState(state);
+  saveState();
+  setEditMode(false);
+  render();
+  closeModal();
+
+  // PWA service worker
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js").catch(() => {});
+  }
+})();
+</script>
+</body>
+</html>
