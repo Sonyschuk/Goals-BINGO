@@ -696,14 +696,25 @@
         }
 
         // Normal mode: increment until complete (then do nothing)
-        if(isComplete(board, i)) return;
+        const target = clampTarget(board.targets[i] || 1);
+        const current = board.counts[i] || 0;
 
-        board.counts[i] = Math.min(5, (board.counts[i] || 0) + 1);
+        if(current >= target){
+       // next tap resets to 0
+          board.counts[i] = 0;
+        } else {
+        board.counts[i] = current + 1;
+        }
+
         board.updatedAt = Date.now();
         saveState();
 
+        // Only celebrate when we JUST reached completion
+        if(board.counts[i] === target){
         checkCelebrations();
-        render();
+        }
+
+          render();
       });
 
       // Long press to reset tile progress (undo)
