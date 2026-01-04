@@ -1,4 +1,4 @@
-const CACHE = "Goals-bingo-v1";
+const CACHE = "Goals-bingo-v2";
 const ASSETS = [
   "./",
   "./index.html",
