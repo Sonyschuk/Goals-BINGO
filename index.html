@@ -430,10 +430,12 @@
 
 <script>
 (() => {
-  const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  const MONTHS = ["January","February","March","April","May","June","July","August","September","October","November","December","Full Year"];
 
   // New storage key for this repo/version
   const LS_KEY = "goals_bingo_v1_state";
+
+  const LAST_VIEW_KEY = "goals_bingo_last_view";
 
   // ===== Generic default board =====
   function defaultBoard(){
@@ -608,7 +610,9 @@
       opt.textContent = m;
       $month.appendChild(opt);
     });
-    $month.value = String(new Date().getMonth());
+    const savedView = localStorage.getItem("goals_bingo_last_view");
+$month.value = savedView !== null ? savedView : String(new Date().getMonth());
+
   }
 
   function getBoard(){
@@ -946,7 +950,11 @@
   }
 
   // ===== Events =====
-  $month.addEventListener("change", render);
+$month.addEventListener("change", () => {
+  localStorage.setItem(LAST_VIEW_KEY, $month.value);
+  render();
+});
+
   $editBtn.addEventListener("click", () => setEditMode(!editMode));
   $resetBtn.addEventListener("click", resetMonth);
   $exportBtn.addEventListener("click", exportAll);
