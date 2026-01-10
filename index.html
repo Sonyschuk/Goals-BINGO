@@ -914,7 +914,16 @@ function getBoard(){
   }
 
   function exportAll(){
-    const cleanBoards = JSON.parse(JSON.stringify(state.boards));
+  // Ensure we always have boards for every MONTHS entry (including Full Year)
+  state = normalizeState(state);
+  saveState();
+
+  // Build a clean boards object with explicit keys 0..MONTHS.length-1
+  const cleanBoards = {};
+  MONTHS.forEach((_, i) => {
+    cleanBoards[i] = JSON.parse(JSON.stringify(state.boards[i] || defaultBoard()));
+  });
+
 
     // Normalize tile text + ensure targets/counts are valid
     Object.values(cleanBoards).forEach(b => {
