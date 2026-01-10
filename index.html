@@ -603,15 +603,19 @@
   }
 
   // ===== UI =====
-  function initMonthSelect(){
-    MONTHS.forEach((m, i) => {
-      const opt = document.createElement("option");
-      opt.value = String(i);
-      opt.textContent = m;
-      $month.appendChild(opt);
-    });
-    const savedView = localStorage.getItem("goals_bingo_last_view");
-$month.value = savedView !== null ? savedView : String(new Date().getMonth());
+ function initMonthSelect(){
+  MONTHS.forEach((m, i) => {
+    const opt = document.createElement("option");
+    opt.value = String(i);
+    opt.textContent = m;
+    $month.appendChild(opt);
+  });
+
+  const savedView = localStorage.getItem("goals_bingo_last_view");
+  $month.value = savedView !== null
+    ? savedView
+    : String(new Date().getMonth());
+}
 
   }
 
