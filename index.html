@@ -951,7 +951,7 @@ $month.value = savedView !== null ? savedView : String(new Date().getMonth());
 
   // ===== Events =====
 $month.addEventListener("change", () => {
-  localStorage.setItem(LAST_VIEW_KEY, $month.value);
+ localStorage.setItem("goals_bingo_last_view", $month.value);
   render();
 });
 
